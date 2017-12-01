@@ -17,7 +17,7 @@ import numpy as np
 class Preprocessor:
 
     image_size = (99,26,1)
-    validation_image_count = 100
+    validation_image_count = 500
     training_file_root_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/train/audio"
     training_categories = ['yes', 'no', 'up', 'down', 'left', 'right', 'on', 'off', 'stop', 'go', 'silence']
     raw_files = None
@@ -44,11 +44,8 @@ class Preprocessor:
             self.save_filter_bank_data(fbf, f["category"])
         print("Preprocessing Complete.")
 
-    def get_filter_bank_features(self, f):
-        (rate, sig) = wav.read(f)
-        # Calculate the mfcc features based on the file data
-        #filter_bank_features = mfcc(sig, rate, nfft=1200)
-        # Calculate the filterbank from the audio file
+    def get_filter_bank_features(self, sound_file_path):
+        (rate, sig) = wav.read(sound_file_path)
         filter_bank_features = logfbank(sig, rate, nfft=1600)
         if filter_bank_features.shape[0]<99 or filter_bank_features.shape[1]<26:
             print("Reshaping...")

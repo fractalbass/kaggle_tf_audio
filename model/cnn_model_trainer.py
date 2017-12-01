@@ -1,3 +1,6 @@
+import numpy as np
+np.random.seed(42) # for reproducibility
+
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
@@ -9,6 +12,7 @@ from keras.utils import plot_model
 from matplotlib import pyplot as plt
 import itertools
 import models
+from time import time
 from python_speech_features import mfcc
 
 # Note:  The data needs to be in the following format...
@@ -35,15 +39,16 @@ from python_speech_features import mfcc
 # dimensions of our images.
 # Default image size is 99x26
 
+start_time = time()
 img_width, img_height = 26, 99
 
 train_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/train'
 validation_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/validation'
-nb_train_samples = 2000
-nb_validation_samples = 100
-epochs = 50
-batch_size = 2  # Note:  Must be less than or equal to the nb_validation_samples size.
-display_points = 200
+nb_train_samples = 10000
+nb_validation_samples = 2000
+epochs = 500
+batch_size = 32  # Note:  Must be less than or equal to the nb_validation_samples size.
+display_points = 800
 
 if K.image_data_format() == 'channels_first':
     input_shape = (1, img_width, img_height)
@@ -52,13 +57,16 @@ else:
 
 m = models.Models()
 #model = m.get_cifar_model(input_shape, 10)
-model = m.get_cifar_model_2(input_shape, 10)
-train_datagen = ImageDataGenerator(rescale=1. / 255)
+#model = m.get_cifar_model_2(input_shape, 10)
+model = m.get_av_blog_model_2(input_shape, 10)
+
+train_datagen = ImageDataGenerator(rescale=1. / 255,  height_shift_range=0.2)
+#train_datagen = ImageDataGenerator(rescale=1.0/255)
 
 # this is the augmentation configuration we will use for testing:
 # only rescaling
 test_datagen = ImageDataGenerator(rescale=1. / 255)
-
+#test_datagen = ImageDataGenerator()
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
     target_size=(img_width, img_height),
@@ -80,11 +88,14 @@ history = model.fit_generator(
     validation_data=validation_generator,
     validation_steps=nb_validation_samples // batch_size)
 
+stop_time=time()
+print("Total training time:  {0} seconds.".format(int(stop_time-start_time)))
+
 ts = int(datetime.timestamp(datetime.now()))
-model.save('./saved_models/kvc_model_{0}.h5'.format(ts))
+model.save('./saved_models/av_2_{0}.h5'.format(ts))
 
 # Save the class indicies:
-pickle.dump(train_generator.class_indices, open("./saved_models/kvc_classes_{0}.p".format(ts), "wb"))
+pickle.dump(train_generator.class_indices, open("./saved_models/av_2_{0}.p".format(ts), "wb"))
 s = len(history.history['acc'])
 st = 1
 if s > display_points:

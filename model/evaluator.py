@@ -23,6 +23,7 @@ class Evaluator:
     def get_last_file(self, extension):
         list_of_files = glob.glob(extension)  # * means all if need specific format then *.csv
         latest_file = max(list_of_files, key=os.path.getctime)
+        print("Using file: {0}".format(latest_file))
         return latest_file
 
     # def get_file_processing_list(self):
@@ -35,10 +36,10 @@ class Evaluator:
     #                 files.append({'category': category, 'filename': fullpath})
     #     return files
 
-    def get_evaluation_files(self, w):
+    def get_evaluation_files(self, w, path):
         files = list()
 
-        eval_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/train/audio/{0}".format(w)
+        eval_directory = "{0}/{1}".format(w,path)
         for filename in [x for x in os.listdir(eval_directory) if x.endswith('.wav')]:
             full_path = "{0}/{1}".format(eval_directory, filename)
             files.append(full_path)
@@ -80,31 +81,28 @@ class Evaluator:
         else:
             return filter_bank_features
 
-    def evaluate(self):
+    def evaluate(self, path, subdirectories):
         fig=0
-        for i in ["down","go","left","no","off","on","right","stop","up","yes"]:
+        total_count = 0
+        total_correct = 0
+        results = []
+        for i in subdirectories:
             print("Evaluating")
             correct = 0
             total = 0
-            eval_files = self.get_evaluation_files(i)
+            eval_files = self.get_evaluation_files(path, i)
             fig = fig + 1
             word_counts = dict()
-            for f in eval_files[0:50]:
-                filter_bank_features = self.get_filter_bank_features(f)
-                scale = 255.0 / np.amax(filter_bank_features)
+            for f in eval_files[:]:
 
-                #filter_bank_features = np.swapaxes(filter_bank_features, 0, 1)
+                total_count = total_count + 1
+                eval = self.evaluate_file(f)
+                if eval[0] is not None:
+                    guess = eval[0]
+                    results.append((f.split('/')[-1], guess))
 
-                filter_bank_features = filter_bank_features * scale
-                # print("Max fbf is now: {0}".format(np.amax(filter_bank_features)))
-                # print(filter_bank_features.shape)
-                if filter_bank_features.shape[0] == 26 and filter_bank_features.shape[1] == 99:
                     total = total + 1
-                    filter_bank_features = np.reshape(filter_bank_features, (26, 99, 1))
-                    filter_bank_features = np.expand_dims(filter_bank_features, axis=0)
-                    c = self.model.predict(filter_bank_features, batch_size=1, verbose=0)
-                    amax = np.argmax(c)
-                    guess = self.class_indices[amax]
+
                     if guess in word_counts.keys():
                         word_counts[guess] = word_counts[guess] + 1
                     else:
@@ -112,8 +110,7 @@ class Evaluator:
 
                     if guess == i:
                         correct = correct + 1
-
-
+                        total_correct = total_correct + 1
 
             if total == 0:
                 total = -1
@@ -125,15 +122,47 @@ class Evaluator:
             plt.bar(range(len(word_counts)), word_counts.values(), align='center')
             plt.xticks(range(len(word_counts)), word_counts.keys())
             plt.title("Guesses for {0}".format(i))
+        print("-------------------------------------")
+        print("\n\nTotal: {0}   Correct: {1}   Final accuracy: {2}".format(total_count, total_correct, total_correct / total_count))
+
         plt.tight_layout()
         plt.show()
+        return results
 
-    def visualize(self):
-        print("Visualize")
+    def evaluate_file(self, filename):
+
+        filter_bank_features = self.get_filter_bank_features(filename)
+        c = None
+        guess = None
+
+        if np.std(filter_bank_features)<1.25:
+            guess = "silence"
+        else:
+            scale = 255.0 / np.amax(filter_bank_features)
+
+            filter_bank_features = filter_bank_features * scale
+
+            if filter_bank_features.shape[0] == 26 and filter_bank_features.shape[1] == 99:
+                filter_bank_features = np.reshape(filter_bank_features, (26, 99, 1))
+                filter_bank_features = np.expand_dims(filter_bank_features, axis=0)
+                c = self.model.predict(filter_bank_features, batch_size=1, verbose=0)
+                amax = np.argmax(c)
+                guess = self.class_indices[amax]
+
+        return (guess, c)
+
 
 if __name__ == "__main__":
-
+    submission = open("mrp_tf_submission_1.csv", "w")
     e = Evaluator()
     e.load_saved_model()
-    e.evaluate()
-    e.visualize()
+    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/train/audio"
+    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/test/audio"
+    #subdirectories = ["down","go","left","no","off","on","right","stop","up","yes"]
+    subdirectories = ["."]
+    results = e.evaluate(path, subdirectories)
+    submission.write("fname,label\n")
+    for (k,v) in results:
+        submission.write("{0},{1}\n".format(k,v))
+    submission.close()
+    print("Finished.")
