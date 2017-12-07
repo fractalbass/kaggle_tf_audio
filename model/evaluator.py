@@ -19,6 +19,7 @@ class Evaluator:
 
     model = None
     class_indices = dict()
+    reported_categories = ['up','down','left','right','stop','go','on','off','yes','no', 'silence']
 
     def get_last_file(self, extension):
         list_of_files = glob.glob(extension)  # * means all if need specific format then *.csv
@@ -99,8 +100,6 @@ class Evaluator:
                 eval = self.evaluate_file(f)
                 if eval[0] is not None:
                     guess = eval[0]
-                    results.append((f.split('/')[-1], guess))
-
                     total = total + 1
 
                     if guess in word_counts.keys():
@@ -112,13 +111,18 @@ class Evaluator:
                         correct = correct + 1
                         total_correct = total_correct + 1
 
+                    if guess not in self.reported_categories:
+                        guess = 'other'
+
+                    results.append((f.split('/')[-1], guess))
+
             if total == 0:
                 total = -1
 
             print("\n\nWord: {4}\nTotal: {0}\nMatching dim: {1}\nCorrect:  {2}\nFinal Accuracy: {3}".format(
                 len(eval_files), total, correct, float(correct) / float(total), i))
 
-            plt.subplot(4,3,fig)
+            #plt.subplot(4,3,fig)
             plt.bar(range(len(word_counts)), word_counts.values(), align='center')
             plt.xticks(range(len(word_counts)), word_counts.keys())
             plt.title("Guesses for {0}".format(i))
@@ -127,6 +131,9 @@ class Evaluator:
 
         plt.tight_layout()
         plt.show()
+        for i in word_counts.items():
+            print("{0}: {1}".format(i[0], i[1]))
+
         return results
 
     def evaluate_file(self, filename):
@@ -153,7 +160,7 @@ class Evaluator:
 
 
 if __name__ == "__main__":
-    submission = open("mrp_tf_submission_1.csv", "w")
+    submission = open("mrp_tf_submission_4.csv", "w")
     e = Evaluator()
     e.load_saved_model()
     path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/train/audio"

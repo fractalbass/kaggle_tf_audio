@@ -144,6 +144,69 @@ class Models():
 
         return model
 
+    def get_av_blog_model_3(self, input_shape, output_length):
+
+        model = Sequential()
+        model.add(Conv2D(32, (7, 7), padding='same', input_shape=input_shape))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(32, (5, 5), padding='same'))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(32, (4, 4), padding='same'))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Flatten())
+
+        model.add(Dense(250))
+
+        model.add(Activation('relu'))
+        model.add(Dense(output_length))
+        model.add(Activation('softmax'))
+
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        return model
+
+    def get_av_blog_model_4(self, input_shape, output_length):
+
+        model = Sequential()
+        model.add(Conv2D(32, (7, 7), padding='same', input_shape=input_shape))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Conv2D(32, (6, 6), padding='same'))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Conv2D(32, (5, 5), padding='same'))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+
+        model.add(Conv2D(32, (4, 4), padding='same'))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Dropout(0.25))
+
+        model.add(Flatten())
+
+        model.add(Dense(250))
+
+        model.add(Activation('relu'))
+        model.add(Dense(output_length))
+        model.add(Activation('softmax'))
+
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        return model
 
 if __name__ == "__main__":
 

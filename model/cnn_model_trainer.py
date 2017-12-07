@@ -1,19 +1,15 @@
 import numpy as np
-np.random.seed(42) # for reproducibility
+np.random.seed(1336) # for reproducibility
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
 from datetime import datetime
 import pickle
-from keras.utils import plot_model
 from matplotlib import pyplot as plt
 import itertools
 import models
 from time import time
-from python_speech_features import mfcc
+import sys
 
 # Note:  The data needs to be in the following format...
 # data/
@@ -41,14 +37,17 @@ from python_speech_features import mfcc
 
 start_time = time()
 img_width, img_height = 26, 99
+saved_file_name = 'av_5_deep_full_words'
 
 train_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/train'
 validation_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/validation'
-nb_train_samples = 10000
-nb_validation_samples = 2000
-epochs = 500
+nb_train_samples = 1000 #49700
+nb_validation_samples = 100 #2000
+epochs = 5
 batch_size = 32  # Note:  Must be less than or equal to the nb_validation_samples size.
-display_points = 800
+display_points = int(nb_train_samples/800)
+if display_points < 100:
+    display_points = 100
 
 if K.image_data_format() == 'channels_first':
     input_shape = (1, img_width, img_height)
@@ -58,7 +57,7 @@ else:
 m = models.Models()
 #model = m.get_cifar_model(input_shape, 10)
 #model = m.get_cifar_model_2(input_shape, 10)
-model = m.get_av_blog_model_2(input_shape, 10)
+model = m.get_av_blog_model_4(input_shape, 30)
 
 train_datagen = ImageDataGenerator(rescale=1. / 255,  height_shift_range=0.2)
 #train_datagen = ImageDataGenerator(rescale=1.0/255)
@@ -91,11 +90,15 @@ history = model.fit_generator(
 stop_time=time()
 print("Total training time:  {0} seconds.".format(int(stop_time-start_time)))
 
-ts = int(datetime.timestamp(datetime.now()))
-model.save('./saved_models/av_2_{0}.h5'.format(ts))
+if sys.version_info[0] < 3:
+    ts = time()
+else:
+    ts = int(datetime.timestamp(datetime.now()))
+
+model.save('./saved_models/{0}_{1}.h5'.format(saved_file_name, ts))
 
 # Save the class indicies:
-pickle.dump(train_generator.class_indices, open("./saved_models/av_2_{0}.p".format(ts), "wb"))
+pickle.dump(train_generator.class_indices, open("./saved_models/{0}_{1}.p".format(saved_file_name, ts), "wb"))
 s = len(history.history['acc'])
 st = 1
 if s > display_points:
