@@ -56,3 +56,6 @@ data/
 
 # Saved Models.  Too big...
 saved_models/
+
+#  Submissions.  Too big...
+*.csv
