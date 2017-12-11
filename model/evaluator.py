@@ -19,7 +19,7 @@ class Evaluator:
 
     model = None
     class_indices = dict()
-    reported_categories = ['up','down','left','right','stop','go','on','off','yes','no', 'silence']
+    reported_categories = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right']
 
     def get_last_file(self, extension):
         list_of_files = glob.glob(extension)  # * means all if need specific format then *.csv
@@ -62,11 +62,11 @@ class Evaluator:
         self.model.summary()
         print("Configuration loaded.")
         print("Loading class indices...")
-        temp_indices = pickle.load(open(saved_class_indices, "rb"))
-        for i in temp_indices.items():
-            self.class_indices[i[1]] = i[0]
-        print("Classes loaded: {0}".format(self.class_indices))
-
+        #temp_indices = pickle.load(open(saved_class_indices, "rb"))
+        #for i in temp_indices.items():
+        #    self.class_indices[i[1]] = i[0]
+        #print("Classes loaded: {0}".format(self.class_indices))
+        self.class_indices = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right']
 
     def get_filter_bank_features(self, f):
         (rate, sig) = wav.read(f)
@@ -142,7 +142,7 @@ class Evaluator:
         c = None
         guess = None
 
-        if np.std(filter_bank_features)<1.25:
+        if np.std(filter_bank_features)>999:
             guess = "silence"
         else:
             scale = 255.0 / np.amax(filter_bank_features)
@@ -160,13 +160,13 @@ class Evaluator:
 
 
 if __name__ == "__main__":
-    submission = open("mrp_tf_submission_4.csv", "w")
+    submission = open("mrp_tf_submission_5.csv", "w")
     e = Evaluator()
     e.load_saved_model()
-    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/train/audio"
-    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/test/audio"
-    #subdirectories = ["down","go","left","no","off","on","right","stop","up","yes"]
-    subdirectories = ["."]
+    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
+    #path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/test/audio"
+    subdirectories = ["down","go","left","no","off","on","right","stop","up","yes"]
+    #subdirectories = ["."]
     results = e.evaluate(path, subdirectories)
     submission.write("fname,label\n")
     for (k,v) in results:

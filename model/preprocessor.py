@@ -16,15 +16,19 @@ import numpy as np
 
 class Preprocessor:
 
+    bigarray = dict()
     image_size = (99,26,1)
     validation_image_count = 500
-    training_file_root_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/train/audio"
-    training_categories = ['four','off','three','bed','go','on','tree','bird','happy','one','two',
-                           'cat','house','right','up','dog','left','seven','wow','down','marvin','sheila','yes',
-                           'eight','nine','six','zero','five','no','stop']
+    training_file_root_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
+    # training_categories = ['four','off','three','bed','go','on','tree','bird','happy','one','two',
+    #                        'cat','house','right','up','dog','left','seven','wow','down','marvin','sheila','yes',
+    #                        'eight','nine','six','zero','five','no','stop']
+    training_categories = ['on','off','yes','no','stop','go','up','down','left','right']
+
     raw_files = None
-    preprocessed_train_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/train"
-    preprocessed_validation_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/validation"
+    preprocessed_train_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/preprocessed/train"
+    preprocessed_validation_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/preprocessed/validation"
+    preprocessed_npz_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/npz"
 
     def load(self):
         print("Loading raw files...")
@@ -66,6 +70,12 @@ class Preprocessor:
         d = os.path.join(self.preprocessed_train_directory, category, fn)
         scale = 255.0 / np.amax(feature_bank)
         feature_bank = np.swapaxes(feature_bank, 0, 1)
+
+        if category not in self.bigarray.keys():
+            self.bigarray[category] = [feature_bank]
+        else:
+            self.bigarray[category].append(feature_bank)
+
         img = Image.fromarray(feature_bank * scale)
         img = scipy.misc.imresize(img, self.image_size)
         scipy.misc.imsave(d, img)
@@ -98,6 +108,10 @@ class Preprocessor:
                     os.rename(src_file, dest_file)
         print("Validation file move complete.")
 
+    def save_big_array(self):
+        for a in self.bigarray.items():
+            f_name = '{0}/{1}'.format(self.preprocessed_npz_directory, a[0])
+            np.savez_compressed(f_name, a[1])
 
 
 if __name__ == "__main__":
@@ -106,5 +120,6 @@ if __name__ == "__main__":
     p.clean_directories()
     p.preprocess()
     p.move_validation_files()
+    p.save_big_array()
 
 

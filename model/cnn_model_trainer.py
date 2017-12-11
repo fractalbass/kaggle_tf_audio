@@ -5,9 +5,8 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras import backend as K
 from datetime import datetime
 import pickle
-from matplotlib import pyplot as plt
 import itertools
-import models
+import trainer.models
 from time import time
 import sys
 
@@ -54,7 +53,7 @@ if K.image_data_format() == 'channels_first':
 else:
     input_shape = (img_width, img_height, 1)
 
-m = models.Models()
+m = trainer.models.Models()
 #model = m.get_cifar_model(input_shape, 10)
 #model = m.get_cifar_model_2(input_shape, 10)
 model = m.get_av_blog_model_4(input_shape, 30)
