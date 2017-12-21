@@ -1,0 +1,5 @@
+# Don't try and save the friggin data!
+/data
+
+# Don't try and save the tensorflow logs
+/model/trainer/logs

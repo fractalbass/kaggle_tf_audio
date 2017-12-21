@@ -20,10 +20,10 @@ class Preprocessor:
     image_size = (99,26,1)
     validation_image_count = 500
     training_file_root_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
-    # training_categories = ['four','off','three','bed','go','on','tree','bird','happy','one','two',
-    #                        'cat','house','right','up','dog','left','seven','wow','down','marvin','sheila','yes',
-    #                        'eight','nine','six','zero','five','no','stop']
-    training_categories = ['on','off','yes','no','stop','go','up','down','left','right']
+    training_categories = ['four','off','three','bed','go','on','tree','bird','happy','one','two',
+                            'cat','house','right','up','dog','left','seven','wow','down','marvin','sheila','yes',
+                            'eight','nine','six','zero','five','no','stop']
+    #training_categories = ['on','off','yes','no','stop','go','up','down','left','right']
 
     raw_files = None
     preprocessed_train_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/preprocessed/train"

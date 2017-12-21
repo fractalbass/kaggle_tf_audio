@@ -14,12 +14,24 @@ from matplotlib import pyplot as plt
 import numpy as np
 from python_speech_features import mfcc
 from time import time
+import trainer.guess_keeper as gk
 
-class Evaluator:
+class MultiEvaluator:
 
+
+    guesses_file = None
+
+    thresholds = {'on': 0.000000000125, 'off': 0.00000125, 'up': 0.00000125, 'down': 0.00000125, 'left': 0.00000125,
+                  'right': 0.00000125, 'stop': 0.1,'go': 0.00000125, 'yes': 0.00000125, 'no': 0.00000125}
+
+    guessKeeper = gk.GuessKeeper(threshold=thresholds)
     model = None
     class_indices = dict()
-    reported_categories = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right']
+    reported_categories = ['stop','off', 'yes', 'no',  'go', 'up', 'down', 'left', 'right', 'on']
+    saved_model_dir = "/Users/milesporter/Desktop/kaggle/model/saved_models"
+
+    def __init__(self):
+        self.guesses_file = open("guesses.csv".format(ts), "w")
 
     def get_last_file(self, extension):
         list_of_files = glob.glob(extension)  # * means all if need specific format then *.csv
@@ -47,29 +59,31 @@ class Evaluator:
 
         return files
 
-    def load_saved_model(self):
+    def save_file_output(self, filename, scores):
+        self.guesses_file.write(filename)
+        scorestring = ""
+        for score in scores:
+            self.guesses_file.write(str(score))
+            scorestring="{0},{1}".format(scorestring, score["score"])
+        print("{0}{1}".format(filename.split("/")[-1], scorestring))
+
+    def load_model_by_name(self, model_name):
         print("Loading model.")
+        print("Loading model configuration from file {0}.  One moment...".format(model_name))
+        model = None
+        try:
+            model = load_model("{0}/{1}.h5".format(self.saved_model_dir, model_name))
+            model.summary()
+            print("Model loaded.")
+        except Exception as exp:
+            print("Error loading {0}...".format(model_name))
+            print(exp.message)
 
-        last_h5_file = self.get_last_file("./saved_models/*.h5")
-        last_p_file = self.get_last_file("./saved_models/*.p")
-
-        saved_model = last_h5_file
-        saved_class_indices = last_p_file
-
-        #  Load saved model...
-        print("Loading model configuration from file {0}.  One moment...".format(saved_model))
-        self.model = load_model(saved_model)
-        self.model.summary()
-        print("Configuration loaded.")
-        print("Loading class indices...")
-        #temp_indices = pickle.load(open(saved_class_indices, "rb"))
-        #for i in temp_indices.items():
-        #    self.class_indices[i[1]] = i[0]
-        #print("Classes loaded: {0}".format(self.class_indices))
-        self.class_indices = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right', 'other']
+        return model
 
     def get_filter_bank_features(self, f):
         (rate, sig) = wav.read(f)
+        max_vol = max(sig)
         # Calculate the mfcc features based on the file data
         #filter_bank_features = mfcc(sig, rate, nfft=1200)
         # Calculate the filterbank from the audio file
@@ -78,52 +92,48 @@ class Evaluator:
         if filter_bank_features.shape[0]<26 or filter_bank_features.shape[1]<99:
             zeros = np.zeros((26,99), dtype=np.int32)
             zeros[:filter_bank_features.shape[0], :filter_bank_features.shape[1]] = filter_bank_features
-            return zeros
+            return zeros, max_vol
         else:
-            return filter_bank_features
+            return filter_bank_features, max_vol
 
-    def evaluate(self, path, subdirectories):
+    def evaluate(self, path, subdirectories, models):
+
         fig=0
         total_count = 0
         total_correct = 0
-        results = []
+
         word_counts = dict()
-
-
+        total = 0
+        print("Evaluating")
         for i in subdirectories:
-            correct = 0
-            total = 0
-            print("Evaluating")
             eval_files = self.get_evaluation_files(path, i)
-            for f in eval_files[:]:
-                total_count = total_count + 1
-                eval = self.evaluate_file(f)
-                if eval[0] is not None:
-                    guess = eval[0]
-                    total = total + 1
+            lnf = len(eval_files)
+            # Initialize everything to other...
+            self.guessKeeper.initialize_files(eval_files, 'other', 1.0)
+            total_count = total_count + 1
 
-                    if guess in word_counts.keys():
-                        word_counts[guess] = word_counts[guess] + 1
+
+            for k in self.reported_categories:
+                model = models[k]
+                cnt = 0
+                print("processing {0}.  Files found: {1}".format(k, lnf))
+                for fileobj in eval_files:
+                    f = fileobj
+                    cnt = cnt + 1
+                    if cnt > 10000 and cnt % 10000 == 0:
+                        print("{0} of {1}...   {2}%".format(cnt, lnf, int((float(cnt) / float(lnf)) * 100.0)))
+                    e = self.evaluate_file(model, f)
+                    if e == -1:
+                        modelname = "silence"
                     else:
-                        word_counts[guess] = 1
+                        modelname = k
 
-                    if guess == i:
-                        correct = correct + 1
-                        total_correct = total_correct + 1
+                    self.guessKeeper.add_guess(filename=f, modelname=modelname, score=e)
 
-                    if guess not in self.reported_categories:
-                        guess = 'other'
+        word_counts = self.guessKeeper.get_word_counts()
 
-                    results.append((f.split('/')[-1], guess))
-
-            if total == 0:
-                total = -1
-
-            print("\n\nWord: {4}\nTotal: {0}\nMatching dim: {1}\nCorrect:  {2}\nFinal Accuracy: {3}".format(
-                len(eval_files), total, correct, float(correct) / float(total), i))
-
-        #plt.subplot(4,3,fig)
         plt.bar(range(len(word_counts)), word_counts.values(), align='center')
+
         plt.xticks(range(len(word_counts)), word_counts.keys())
 
         print("-------------------------------------")
@@ -134,16 +144,16 @@ class Evaluator:
         for i in word_counts.items():
             print("{0}: {1}".format(i[0], i[1]))
 
-        return results
+        return self.guessKeeper.get_all_guesses()
 
-    def evaluate_file(self, filename):
+    def evaluate_file(self, model, filename):
 
-        filter_bank_features = self.get_filter_bank_features(filename)
+        filter_bank_features, max_vol = self.get_filter_bank_features(filename)
         c = None
         guess = None
 
-        if np.std(filter_bank_features)>999:
-            guess = "silence"
+        if max_vol < 1000:
+            guess = -1
         else:
             scale = 255.0 / np.amax(filter_bank_features)
 
@@ -152,25 +162,40 @@ class Evaluator:
             if filter_bank_features.shape[0] == 26 and filter_bank_features.shape[1] == 99:
                 filter_bank_features = np.reshape(filter_bank_features, (26, 99, 1))
                 filter_bank_features = np.expand_dims(filter_bank_features, axis=0)
-                c = self.model.predict(filter_bank_features, batch_size=1, verbose=0)
-                amax = np.argmax(c)
-                guess = self.class_indices[amax]
+                c = model.predict(filter_bank_features, batch_size=1, verbose=0)
 
-        return (guess, c)
+                guess = c[0][0]
+
+        return guess
 
 
 if __name__ == "__main__":
     ts = str(time())
     submission = open("mrp_tf_submission_{0}.csv".format(ts), "w")
-    e = Evaluator()
-    e.load_saved_model()
+    models = dict()
+    evaluator = MultiEvaluator()
+    cnt = 0
+    words = ['stop', 'on', 'off', 'yes', 'no', 'go', 'up', 'down', 'left', 'right']
+    for i in words:
+        cnt = cnt + 1
+        print("Processing {0}.  {1} of {2}...".format(i, cnt, len(words)))
+        #m = evaluator.load_model_by_name(i)
+        #if m is not None:
+        models[i] = evaluator.load_model_by_name(i)
+
+    print("Successfully loaded {0} models.".format(len(models)))
+
     #path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
     path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/test/audio"
     #subdirectories = ["down","go","left","no","off","on","right","stop","up","yes"]
+    #subdirectories = ["on"]
     subdirectories = ["."]
-    results = e.evaluate(path, subdirectories)
+
+    results = evaluator.evaluate(path, subdirectories, models)
     submission.write("fname,label\n")
-    for (k,v) in results:
-        submission.write("{0},{1}\n".format(k,v))
+    for item in results:
+        fname = item['filename'].split('/./')[-1]
+        submission.write("{0},{1}\n".format( fname, item['guess'] ))
+        print("{0}, {1}, {2}".format(fname, item['guess'],item['score']))
     submission.close()
     print("Finished.")

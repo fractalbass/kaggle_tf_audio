@@ -85,15 +85,15 @@ class Models():
     def get_av_blog_model(self, input_shape, output_length):
 
         model = Sequential()
-        model.add(Conv2D(25, (5, 5), padding='same', input_shape=input_shape))
+        model.add(Conv2D(25, (5, 5), padding='same', input_shape=input_shape, use_bias=False))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(Conv2D(25, (5, 5), padding='same'))
+        model.add(Conv2D(25, (5, 5), padding='same', use_bias=False))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(Conv2D(25, (4, 4), padding='same'))
+        model.add(Conv2D(25, (4, 4), padding='same', use_bias=False))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -108,6 +108,71 @@ class Models():
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         return model
+
+    #  Taken from:
+    #  https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study/#five
+    #
+    def get_av_blog_sigmoid_model(self, input_shape, output_length):
+
+        model = Sequential()
+        model.add(Conv2D(25, (5, 5), padding='same', input_shape=input_shape, use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(25, (5, 5), padding='same', use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(25, (4, 4), padding='same', use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Flatten())
+
+        model.add(Dense(50))
+
+        model.add(Activation('relu'))
+        model.add(Dense(output_length))
+        model.add(Activation('sigmoid'))
+
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        return model
+
+        #  Taken from:
+        #  https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study/#five
+        #
+
+    def get_sigmoid_model_simple(self, input_shape, output_length):
+        model = Sequential()
+        model.add(Conv2D(25, (3, 3), padding='same', input_shape=input_shape, use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(25, (3, 3), padding='same', use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(25, (3, 3), padding='same', input_shape=input_shape, use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(25, (3, 3), padding='same', use_bias=False))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Flatten())
+
+        model.add(Dense(150))
+
+        model.add(Activation('relu'))
+        model.add(Dense(output_length))
+        model.add(Activation('sigmoid'))
+
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        return model
+
 
     def get_av_blog_model_2(self, input_shape, output_length):
 
