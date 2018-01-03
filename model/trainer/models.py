@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Conv2D, MaxPooling2D, Conv1D, ZeroPadding2D, AveragePooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import optimizers
 from keras.utils import plot_model
@@ -145,21 +145,80 @@ class Models():
 
     def get_sigmoid_model_simple(self, input_shape, output_length):
         model = Sequential()
-        model.add(Conv2D(25, (3, 3), padding='same', input_shape=input_shape, use_bias=False))
+        model.add(Conv2D(32, (5, 5), padding='same', input_shape=input_shape))
+        model.add(Activation('relu'))
+
+        model.add(Conv2D(32, (4, 4), padding='same'))
+        model.add(Activation('relu'))
+
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Activation('relu'))
+        model.add(Conv2D(32, (3, 3), padding='same', input_shape=input_shape))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(Conv2D(25, (3, 3), padding='same', use_bias=False))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Flatten())
 
-        model.add(Conv2D(25, (3, 3), padding='same', input_shape=input_shape, use_bias=False))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dense(500))
 
-        model.add(Conv2D(25, (3, 3), padding='same', use_bias=False))
         model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dense(output_length))
+        model.add(Activation('sigmoid'))
+
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        return model
+
+    def get_covn2d_six_layer_model(self, input_shape, output_length):
+        model = Sequential()
+        model.add(ZeroPadding2D((1, 1), input_shape=input_shape))
+        model.add(Conv2D(nb_filter=64, nb_row=3, nb_col=3, border_mode='valid', activation='relu',
+                                init='glorot_normal'))
+        model.add(ZeroPadding2D((1, 1)))
+        model.add(Conv2D(64, 3, 3, activation='relu'))
+        model.add(MaxPooling2D((2, 2), strides=(1, 1)))
+        model.add(Dropout(0.25))
+
+        model.add(ZeroPadding2D((1, 1)))
+        model.add(Conv2D(nb_filter=64, nb_row=3, nb_col=3, border_mode='valid', activation='relu'))
+        model.add(ZeroPadding2D((1, 1)))
+        model.add(Conv2D(64, 3, 3, activation='relu'))
+        model.add(MaxPooling2D((2, 2), strides=(1, 1)))
+        model.add(Dropout(0.25))
+
+        model.add(ZeroPadding2D((1, 1)))
+        model.add(Conv2D(nb_filter=32, nb_row=3, nb_col=3, border_mode='valid', activation='relu'))
+        model.add(ZeroPadding2D((1, 1)))
+        model.add(Conv2D(32, 3, 3, activation='relu'))
+        model.add(MaxPooling2D((2, 2), strides=(1, 1)))
+        model.add(Dropout(0.25))
+
+        model.add(Flatten())
+
+        model.add(Activation('relu'))
+        model.add(Dense(output_length))
+        model.add(Activation('sigmoid'))
+
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        return model
+
+    def get_sigmoid_model_simple_2(self, input_shape, output_length):
+        model = Sequential()
+        model.add(Conv2D(32, (3, 3), padding='same', input_shape=input_shape))
+        model.add(Activation('relu'))
+
+        model.add(Conv2D(32, (3, 3), padding='same'))
+        model.add(Activation('relu'))
+
+        model.add(Conv2D(32, (3, 3), padding='same'))
+        model.add(Activation('relu'))
+
+        model.add(Conv2D(32, (3, 3), padding='same'))
+        model.add(Activation('relu'))
+
+        model.add(AveragePooling2D(pool_size=(2, 2)))
 
         model.add(Flatten())
 
@@ -172,7 +231,6 @@ class Models():
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         return model
-
 
     def get_av_blog_model_2(self, input_shape, output_length):
 

@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-np.random.seed(56489231) # for reproducibility (1776 for stop, 1336 for others.)
+np.random.seed(4655) # for reproducibility (1776 for stop, 1336 for others.)
 from data_utility import DataUtility
 from time import time
 import models
@@ -9,14 +9,19 @@ from keras import backend as K
 from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import ImageDataGenerator
-
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 class MultiTrainer:
+
+    save_dir = "../../saved_models"
 
     def train(self, target):
         start_time = time()
         img_width, img_height = 26, 99
-        epochs = 75
+        epochs = 20
         batch_size = 32
         tb_callback = CB.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=1, write_graph=True,
                                      write_grads=True, write_images=True, embeddings_freq=0,
@@ -30,9 +35,9 @@ class MultiTrainer:
         else:
             input_shape = (img_width, img_height, 1)
 
-        model = m.get_sigmoid_model_simple(input_shape, 1)
+        model = m.get_covn2d_six_layer_model(input_shape, 1)
 
-        X, Y = du.load_local_binary_data('/Users/milesporter/Desktop/Kaggle Voice Challenge/data/npz', target)
+        X, Y = du.load_local_binary_data('../../data/npz', target)
         # X, Y = du.load_cloud_binary_data(target)
         x_train, y_train, x_test, y_test = train_test_split(X, Y, test_size=0.1, random_state=42)
 
@@ -67,19 +72,27 @@ class MultiTrainer:
         #model.fit_generator(datagen.flow(new_x_train, x_test, batch_size=batch_size),
         #                   steps_per_epoch=len(x_train) / batch_size, epochs=epochs, validation_data=(new_y_train, y_test))
 
-        model.fit(x=new_x_train, y=x_test, validation_data=(new_y_train, y_test), batch_size=batch_size, epochs=epochs,
-                   verbose=1, callbacks=[tb_callback])
+        history = model.fit(x=new_x_train, y=x_test, validation_data=(new_y_train, y_test), batch_size=batch_size, epochs=epochs,
+                   verbose=0, callbacks=[tb_callback])
 
         stop_time = time()
         print("Total training time:  {0} seconds.".format(int(stop_time - start_time)))
         # model.save("./local_big_training")
-        du.save_multi_model('{0}'.format(target), model)
+        du.save_multi_model(self.save_dir, '{0}'.format(target), model)
         print("Model saved as {0}.h5".format(target))
-
+        return {"name": target, "accuracy": history.history['acc']}
 
 if __name__ == '__main__':
+    start_time = time()
+    results = list()
     #target = sys.argv[1]
     mt = MultiTrainer()
     for t in ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right']:
-    #for t in ['stop']:
-        mt.train(t)
+    #for t in ['no']:
+        results.append(mt.train(t))
+
+    print("\n\nAccuracy summary:")
+    for result in results:
+        print("{0}: {1}".format(result["name"], result["accuracy"][-1]))
+    stop_time=time()
+    print("\n\nTotal training time: {0}".format(stop_time-start_time))

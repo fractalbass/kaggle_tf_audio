@@ -19,12 +19,13 @@ mg_width, img_height = 26, 99
 saved_file_name = 'av_5_deep_full_words'
 training_categories = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right']
 other_categories = ['four','three','bed','tree','bird','happy','one','two','cat','house','dog','left','seven','wow','marvin','sheila','eight','nine','six','zero','five']
-train_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/train'
-validation_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/validation'
+train_data_dir = '../../data/preprocessed/train'
+validation_data_dir = '../../data/preprocessed/validation'
 nb_train_samples = 49700
 nb_validation_samples = 2000
-epochs = 500
+epochs = 10
 batch_size = 32  # Note:  Must be less than or equal to the nb_validation_samples size.
+img_width, img_height = 26, 99
 
 if K.image_data_format() == 'channels_first':
     input_shape = (1, img_width, img_height)
@@ -34,11 +35,11 @@ else:
 m = models.Models()
 #model = m.get_cifar_model(input_shape, 10)
 #model = m.get_cifar_model_2(input_shape, 10)
-model = m.get_av_blog_model(input_shape, len(training_categories)+1)
+model = m.get_covn2d_six_layer_model(input_shape, len(training_categories)+1)
 du = DataUtility(bucket_id='kaggle_voice_data', root_folder='/')
 
-#X, Y = du.load_data_local('/Users/milesporter/Desktop/Kaggle Voice Challenge/data/npz')
-X, Y = du.load_cloud_data(training_categories, other_categories)
+X, Y = du.load_data_local('../../data/npz', training_categories, other_categories)
+#X, Y = du.du.load_local_binary_data('../../data/npz', target)
 
 x_train, y_train, x_test, y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 
@@ -86,8 +87,9 @@ model.fit_generator(datagen.flow(x_train, x_test, batch_size=32),
 
 stop_time = time()
 print("Total training time:  {0} seconds.".format(int(stop_time-start_time)))
-#model.save("./local_big_training")
-du.save_model('full_data_500_epochs_training_2', model)
+model.save("./local_big_training")
+#du.save_model('red_one_google', model)
+
 print("Model saved.")
 
 #du.save_categories("text_full_data_150_epochs_training")

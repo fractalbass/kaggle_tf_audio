@@ -1,7 +1,10 @@
 from google.cloud import storage
 from tensorflow.python.lib.io import file_io
 from keras import models
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import os
 import numpy as np
 from time import time
@@ -185,20 +188,20 @@ class DataUtility:
         except Exception as er:
             print("An error occurred.  {0}".format(er.message))
 
-    def save_multi_model(self, model_name, model):
+    def save_multi_model(self, path, model_name, model):
 
         ts = str(time())
-        filename = '{0}.h5'.format(model_name)
+        filename = '{0}/{1}.h5'.format(path, model_name)
         model.save(filename)
 
         # Save the model to the Cloud Storage bucket's jobs directory
-        try:
-            with file_io.FileIO(filename, mode='r') as input_f:
-                gs_name = "gs://{0}/models/{1}".format(self.bucket_id, filename)
-                with file_io.FileIO(gs_name, mode='w+') as output_f:
-                    output_f.write(input_f.read())
-        except Exception as er:
-            print("An error occurred.  {0}".format(er.message))
+        # try:
+        #     with file_io.FileIO(filename, mode='r') as input_f:
+        #         gs_name = "gs://{0}/models/{1}".format(self.bucket_id, filename)
+        #         with file_io.FileIO(gs_name, mode='w+') as output_f:
+        #             output_f.write(input_f.read())
+        # except Exception as er:
+        #   er  print("An error occurred.  {0}".format(er.message))
 
 
     def save_categories(self, filename):
