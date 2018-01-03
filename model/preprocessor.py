@@ -19,16 +19,16 @@ class Preprocessor:
     bigarray = dict()
     image_size = (99,26,1)
     validation_image_count = 500
-    training_file_root_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
+    training_file_root_directory = "../data/train/audio"
     training_categories = ['four','off','three','bed','go','on','tree','bird','happy','one','two',
                             'cat','house','right','up','dog','left','seven','wow','down','marvin','sheila','yes',
                             'eight','nine','six','zero','five','no','stop']
     #training_categories = ['on','off','yes','no','stop','go','up','down','left','right']
 
     raw_files = None
-    preprocessed_train_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/preprocessed/train"
-    preprocessed_validation_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/preprocessed/validation"
-    preprocessed_npz_directory = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/npz"
+    preprocessed_train_directory = "../data/preprocessed/train"
+    preprocessed_validation_directory = "../data/preprocessed/validation"
+    preprocessed_npz_directory = "../data/npz"
 
     def load(self):
         print("Loading raw files...")

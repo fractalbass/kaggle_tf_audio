@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from python_speech_features import mfcc
 from time import time
+import matplotlib.pyplot as plt
 
 class Evaluator:
 
@@ -50,8 +51,8 @@ class Evaluator:
     def load_saved_model(self):
         print("Loading model.")
 
-        last_h5_file = self.get_last_file("./saved_models/*.h5")
-        last_p_file = self.get_last_file("./saved_models/*.p")
+        last_h5_file = self.get_last_file("../saved_models_single_net/*.h5")
+        last_p_file = self.get_last_file("../saved_models_single_net/*.p")
 
         saved_model = last_h5_file
         saved_class_indices = last_p_file
@@ -66,7 +67,7 @@ class Evaluator:
         #for i in temp_indices.items():
         #    self.class_indices[i[1]] = i[0]
         #print("Classes loaded: {0}".format(self.class_indices))
-        self.class_indices = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right', 'other']
+        self.class_indices = ['on', 'off', 'yes', 'no', 'stop', 'go', 'up', 'down', 'left', 'right']
 
     def get_filter_bank_features(self, f):
         (rate, sig) = wav.read(f)
@@ -142,21 +143,24 @@ class Evaluator:
         c = None
         guess = None
 
-        if np.std(filter_bank_features)>999:
+        if np.amax(filter_bank_features) < 10:
             guess = "silence"
         else:
             scale = 255.0 / np.amax(filter_bank_features)
 
-            filter_bank_features = filter_bank_features * scale
+            # filter_bank_features = filter_bank_features * 1.0 / 255
 
             if filter_bank_features.shape[0] == 26 and filter_bank_features.shape[1] == 99:
                 filter_bank_features = np.reshape(filter_bank_features, (26, 99, 1))
                 filter_bank_features = np.expand_dims(filter_bank_features, axis=0)
                 c = self.model.predict(filter_bank_features, batch_size=1, verbose=0)
                 amax = np.argmax(c)
-                guess = self.class_indices[amax]
+                if amax >= len(self.class_indices):
+                    guess = 'other'
+                else:
+                    guess = self.class_indices[amax]
 
-        return (guess, c)
+        return guess, c
 
 
 if __name__ == "__main__":
@@ -165,12 +169,21 @@ if __name__ == "__main__":
     e = Evaluator()
     e.load_saved_model()
     #path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
-    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/test/audio"
-    #subdirectories = ["down","go","left","no","off","on","right","stop","up","yes"]
+    path = "../data/test/audio"
+    keywords = ["down","go","left","no","off","on","right","stop","up","yes","other"]
     subdirectories = ["."]
     results = e.evaluate(path, subdirectories)
     submission.write("fname,label\n")
+    result_counts = dict()
+    for r in keywords:
+        result_counts[r] = 0.
+
     for (k,v) in results:
-        submission.write("{0},{1}\n".format(k,v))
+        result_counts[v] = result_counts[v] + 1
+        submission.write('{0},{1}\n'.format(k, v))
     submission.close()
+
+    plt.bar(range(len(result_counts)), result_counts.values(), align='center')
+    plt.show()
+
     print("Finished.")

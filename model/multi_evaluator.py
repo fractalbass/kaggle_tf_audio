@@ -28,7 +28,7 @@ class MultiEvaluator:
     model = None
     class_indices = dict()
     reported_categories = ['stop','off', 'yes', 'no',  'go', 'up', 'down', 'left', 'right', 'on']
-    saved_model_dir = "/Users/milesporter/Desktop/kaggle/model/saved_models"
+    saved_model_dir = "../saved_models"
 
     def __init__(self):
         self.guesses_file = open("guesses.csv".format(ts), "w")
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     print("Successfully loaded {0} models.".format(len(models)))
 
     #path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/train/audio"
-    path = "/Users/milesporter/Desktop/Kaggle Voice Challenge/data/test/audio"
+    path = "../data/test/audio"
     #subdirectories = ["down","go","left","no","off","on","right","stop","up","yes"]
     #subdirectories = ["on"]
     subdirectories = ["."]

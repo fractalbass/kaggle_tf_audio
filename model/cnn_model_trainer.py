@@ -9,6 +9,7 @@ import itertools
 import trainer.models
 from time import time
 import sys
+from matplotlib import pyplot as plt
 
 # Note:  The data needs to be in the following format...
 # data/
@@ -36,13 +37,13 @@ import sys
 
 start_time = time()
 img_width, img_height = 26, 99
-saved_file_name = 'av_5_deep_full_words'
+saved_file_name = 'keras_deep_full_words'
 
-train_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/train'
-validation_data_dir = '/Users/milesporter/Desktop/Kaggle Voice Challenge/model/data/preprocessed/validation'
-nb_train_samples = 1000 #49700
-nb_validation_samples = 100 #2000
-epochs = 5
+train_data_dir = '../data/preprocessed/train'
+validation_data_dir = '../data/preprocessed/validation'
+nb_train_samples = 49700
+nb_validation_samples = 2000
+epochs = 35
 batch_size = 32  # Note:  Must be less than or equal to the nb_validation_samples size.
 display_points = int(nb_train_samples/800)
 if display_points < 100:
@@ -56,7 +57,7 @@ else:
 m = trainer.models.Models()
 #model = m.get_cifar_model(input_shape, 10)
 #model = m.get_cifar_model_2(input_shape, 10)
-model = m.get_av_blog_model_4(input_shape, 30)
+model = m.get_covn2d_six_layer_model(input_shape, 30)
 
 train_datagen = ImageDataGenerator(rescale=1. / 255,  height_shift_range=0.2)
 #train_datagen = ImageDataGenerator(rescale=1.0/255)
@@ -94,10 +95,10 @@ if sys.version_info[0] < 3:
 else:
     ts = int(datetime.timestamp(datetime.now()))
 
-model.save('./saved_models/{0}_{1}.h5'.format(saved_file_name, ts))
+model.save('../saved_models_single_net/{0}_{1}.h5'.format(saved_file_name, ts))
 
 # Save the class indicies:
-pickle.dump(train_generator.class_indices, open("./saved_models/{0}_{1}.p".format(saved_file_name, ts), "wb"))
+pickle.dump(train_generator.class_indices, open("../saved_models_single_net/{0}_{1}.p".format(saved_file_name, ts), "wb"))
 s = len(history.history['acc'])
 st = 1
 if s > display_points:

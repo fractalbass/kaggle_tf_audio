@@ -1,5 +1,8 @@
 # Don't try and save the friggin data!
 /data
 
+/saved_models
+/saved_models_single_net
+
 # Don't try and save the tensorflow logs
 /model/trainer/logs
